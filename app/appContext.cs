@@ -1,9 +1,6 @@
-﻿//using System;
-//using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
-//using Microsoft.EntityFrameworkCore.Metadata;
+﻿using Microsoft.EntityFrameworkCore;
 
-namespace NotesMinimalAPI.app
+namespace ApppAPI.app
 {
     public partial class appContext : DbContext
     {
@@ -79,7 +76,7 @@ namespace NotesMinimalAPI.app
                 entity.HasOne(d => d.UslugaRefNavigation)
                     .WithMany(p => p.Counters)
                     .HasForeignKey(d => d.UslugaRef)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .OnDelete(DeleteBehavior.ClientNoAction)
                     .HasConstraintName("usluga");
             });
 
@@ -109,7 +106,8 @@ namespace NotesMinimalAPI.app
                     .HasColumnType("int(10) unsigned")
                     .HasColumnName("counter_ref");
 
-                entity.Property(e => e.MDate).HasColumnName("m_date");
+                entity.Property(e => e.MDate)
+                    .HasColumnName("m_date");
 
                 entity.Property(e => e.Value)
                     .HasColumnType("decimal(20,6) unsigned")
@@ -118,7 +116,7 @@ namespace NotesMinimalAPI.app
                 entity.HasOne(d => d.CounterRefNavigation)
                     .WithMany(p => p.Measures)
                     .HasForeignKey(d => d.CounterRef)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .OnDelete(DeleteBehavior.ClientNoAction)
                     .HasConstraintName("counter");
             });
 
@@ -143,7 +141,8 @@ namespace NotesMinimalAPI.app
                     .HasColumnType("decimal(20,6) unsigned")
                     .HasColumnName("price");
 
-                entity.Property(e => e.TDate).HasColumnName("t_date");
+                entity.Property(e => e.TDate)
+                    .HasColumnName("t_date");
 
                 entity.Property(e => e.UslugaRef)
                     .HasColumnType("int(10) unsigned")
@@ -152,13 +151,16 @@ namespace NotesMinimalAPI.app
                 entity.HasOne(d => d.UslugaRefNavigation)
                     .WithMany(p => p.Tariffs)
                     .HasForeignKey(d => d.UslugaRef)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .OnDelete(DeleteBehavior.ClientNoAction)
                     .HasConstraintName("usluga1");
             });
 
             modelBuilder.Entity<Usluga>(entity =>
             {
                 entity.ToTable("usluga");
+
+                entity.HasKey(e => e.UslugaId)
+                    .HasName("PRIMARY");
 
                 entity.HasIndex(e => e.UslugaName, "usluga_name")
                     .IsUnique()

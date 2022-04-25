@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace NotesMinimalAPI.app
+﻿namespace ApppAPI.app
 {
     public partial class Counter
     {
@@ -20,7 +17,7 @@ namespace NotesMinimalAPI.app
 
         public virtual Usluga UslugaRefNavigation { get; set; } = null!;
         public virtual ICollection<Measure> Measures { get; set; }
-        public void fill(counter value, bool full)
+        public Counter fill(counter value, bool full=true)
         {
             if (full) { 
                 CounterId = value.counter_id;
@@ -30,8 +27,9 @@ namespace NotesMinimalAPI.app
             Serial = value.serial;
             Digits = value.digits;
             Precise = value.precise;
+            return this;
         }
-        public Counter(counter c) { fill(c, true); }
+        public Counter(counter c) : this() { fill(c, true); }
 
     }
     public partial struct counter

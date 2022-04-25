@@ -9,7 +9,7 @@
     }
   },
   "profiles": {
-    "NotesMinimalAPI": {
+    "ApppAPI": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,

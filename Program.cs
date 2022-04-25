@@ -1,7 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-
-using NotesMinimalAPI.app;
-using NotesMinimalAPI.ctl;
+using ApppAPI.app;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +13,6 @@ builder.Services.AddSwaggerGen();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<appContext>(options => options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
-
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 var app = builder.Build();
@@ -44,7 +41,7 @@ app.MapGet("/usluga/undefined/tariff", appController.GetTariffs);
 app.MapGet("/usluga/{usl:int}/tariff", appController.GetTariffsByUsluga);
 app.MapPost("/usluga/{usl:int}/tariff", appController.AddTariff);
 
-//app.MapGet("/usluga/{usl:int}/tariff/{date}", appController.GetTariffByDate);
+app.MapGet("/usluga/{usl:int}/tariff/{DTime:datetime:length(10)}", appController.GetTariffByDate);
 
 app.MapGet("/counter", appController.GetCounters);
 app.MapGet("/counter/{id:int}", appController.GetCounter);

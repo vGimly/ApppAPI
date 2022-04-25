@@ -1,7 +1,4 @@
-﻿//using System;
-//using System.Collections.Generic;
-
-namespace NotesMinimalAPI.app
+﻿namespace ApppAPI.app
 {
     public partial class Usluga
     {
@@ -15,10 +12,11 @@ namespace NotesMinimalAPI.app
         public string UslugaName { get; set; } = null!;
         public DateTime Alt { get; set; }
 
-        public virtual ICollection<Counter> Counters { get; set; }
-        public virtual ICollection<Tariff> Tariffs { get; set; }
-        public void fill(usluga u, bool full) { if (full) UslugaId = u.usluga_id;  UslugaName = u.usluga_name; }
-        public Usluga(usluga u) { fill(u, true); }
+        public virtual ICollection<Counter> Counters { get; set; } = null!;
+        public virtual ICollection<Tariff> Tariffs { get; set; } = null!;
+        public Usluga fill(usluga u, bool full=true) {
+            if (full) UslugaId = u.usluga_id;  UslugaName = u.usluga_name; return this; }
+        public Usluga(usluga u) : this() { fill(u, true); }
     }
     public partial struct usluga {
         public uint usluga_id { get; set; }
@@ -27,3 +25,4 @@ namespace NotesMinimalAPI.app
     }
 
 }
+ 
