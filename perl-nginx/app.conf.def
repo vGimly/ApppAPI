@@ -1,0 +1,3 @@
+{"log":"debug","hypnotoad":{"listen":3000},
+"mysql":"mysql://usr:pass@host/app",
+"secrets":["use-secret-here"]}
