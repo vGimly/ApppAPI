@@ -143,7 +143,14 @@ export default { name: 'measures',
 	else return this.add(e);
     },
 
+    get_fmt(){
+        return this.$parent && this.$parent.get_format(this.newPrec,this.newDig);
+    },
+    get_step(){
+        return this.$parent && this.$parent.get_step(this.newPrec);
+    },
   },
+
   mounted() {
     if (this.usluga && this.counter)
 	this.fetchData();
@@ -167,7 +174,7 @@ template: `
     <section class="modal-card-body">
         <table class="table">
         <tr><td><label for=m-date>Дата:</label></td><td><input id=m-date name=mDate v-model="newDate" type=date @change="fetchPrice"></td></tr>
-        <tr><td><label for=value>Показания:</label></td><td><input id=value name=value v-model="newValue" ref=first></td></tr>
+        <tr><td><label for=value>Показания:</label></td><td><input id=value name=value v-model="newValue" ref=first type=number :format="get_fmt()" :step="get_step()"></td></tr>
 	<tr><td>Действущий тариф:</td><td title="Выбрать дату">{{ tariff }}</td></tr>
         </table>
     </section>

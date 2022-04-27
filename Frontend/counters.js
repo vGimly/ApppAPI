@@ -34,7 +34,7 @@ export default { name: 'counters',
 	    })
 	 .catch(a=>this.$parent.alert(a));
     },
-
+    
     async add(e) {
 	const form=this.$refs.form || e.target.form || e.target;
 	const query=Object.fromEntries(new FormData(form).entries());
@@ -129,7 +129,12 @@ export default { name: 'counters',
 	if (this.selected) return this.update(e);
 	else return this.add(e);
     },
-
+    get_fmt(){
+	return this.$parent && this.$parent.get_format(this.newPrec,this.newDig);
+    },
+    get_step(){
+	return this.$parent && this.$parent.get_step(this.newPrec);
+    },
   },
   mounted() {
     this.fetchData()
@@ -142,7 +147,7 @@ template: `
 <form ref=foru action="api/counter/"></form>
 <form ref=form @submit.prevent="submit" method=POST action="api/usluga/0/counter">
 <input type=submit style="display:none" title="to-catch-enter"/>
-<input type=hidden name=uslugaId :value="usluga" />
+<input type=hidden name=uslugaRef :value="usluga" />
 <input type=hidden name=counterId :value="selected && selected.counterId" />
 
     <header class="modal-card-head">
@@ -157,7 +162,7 @@ template: `
         <tr><td><label for=digits>Разрядность:</label></td><td><input id=digits name=digits v-model="newDig" type=number step=1 min=1 max=255></td></tr>
         <tr><td><label for=precise>Точность:</label></td><td><input id=precise name=precise v-model="newPrec" type=number step=1 min=0 max=255></td></tr>
         <tr><td><label for=start-date>Начало работы:</label></td><td><input id=start-date name=startDate v-model="newStart" type=date></td></tr>
-        <tr><td><label for=init-value>Начальные показания:</label></td><td><input id=init-value name=initValue v-model="newInit"></td></tr>
+        <tr><td><label for=init-value>Начальные показания:</label></td><td><input id=init-value name=initValue v-model="newInit" type=number :format="get_fmt()" :step="get_step()"></td></tr>
         </table>
     </section>
         <footer class="modal-card-foot">
