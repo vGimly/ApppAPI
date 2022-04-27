@@ -112,21 +112,42 @@ namespace ApppAPI.app
         #region Counter
         public static async Task<IResult> GetCounters(appContext db)
         {
-            return Results.Ok(await db.Counters
+            return Results.Ok(await db.Counter2
 //                .Select(u => new { u.CounterId, u.UslugaRef, u.CounterName, u.Serial, u.Precise, u.Digits })
                 .ToListAsync());
         }
         public static async Task<IResult> GetCountersByUsluga(uint usl, appContext db)
         {
-            return Results.Ok(await db.Counters.Where(obj => obj.UslugaRef == usl)
-                //.Select(u=>new {u.CounterId, u.UslugaRef, u.CounterName, u.Serial, u.Precise, u.Digits})
+            return Results.Ok(await
+                (from c in db.Counter2
+                 where c.UslugaRef == usl
+                 /*
+                                  let M = (from m in db.Measures
+                                           orderby m.MId ascending
+                                           where m.CounterRef == c.CounterId
+                                           select new Counter { StartDate = m.MDate, InitValue = m.Value }
+                                           ).FirstOrDefault(new Counter { StartDate = DateTime.MinValue, InitValue = 0 })
+                                  select new Counter
+                                  {
+                                      CounterId = c.CounterId,
+                                      CounterName = c.CounterName,
+                                      UslugaRef = c.UslugaRef,
+                                      Digits = c.Digits,
+                                      Precise = c.Precise,
+                                      Serial=c.Serial,
+                                      InitValue=M.InitValue,
+                                      StartDate=M.StartDate
+                                  }
+                 */
+                select c
+                )
                 .ToListAsync());
         }
         public static async Task<IResult> GetCounter(uint id, appContext db)
         {
             return await db.Counters.FindAsync(id)
                     is Counter u
-                        ? Results.Ok(u) // new { u.CounterId, u.UslugaRef, u.CounterName, u.Serial, u.Precise, u.Digits })
+                        ? Results.Ok(u)
                         : Results.NotFound();
         }
         public static async Task<IResult> UpdCounter(uint id, Counter t, appContext db)
@@ -157,7 +178,7 @@ namespace ApppAPI.app
         //}
         public static async Task<IResult> AddCounter(uint usl, Counter U, appContext db)
         {
-            var M= new Measure { MDate = U.StartDate, Value = U.InitValue };
+            var M= new Measure { MDate = U.StartDate, Value = U.InitValue};
             U.Measures.Add(M);
             db.Counters.Add(U);
             await db.SaveChangesAsync();
@@ -187,9 +208,50 @@ namespace ApppAPI.app
                         select new { m.CounterRef, m.MId, m.MDate, m.Value, s.InitValue,
                             Tariff = (from t in db.Tariffs join c in db.Counters on t.UslugaRef equals c.UslugaRef
                                       where c.CounterId == cnt && t.TDate <= m.MDate
-                                      orderby t.TDate descending select t.Price).First()
+                                      orderby t.TDate descending select t.Price).FirstOrDefault()
                         };
             return Results.Ok(await query.ToListAsync());
+        }
+    public static IEnumerable<TResult> SelectWithPrevious<TSource, TResult>
+    (this IEnumerable<TSource> source,
+     Func<TSource, TSource, TResult> projection)
+        {
+            using (var iterator = source.GetEnumerator())
+            {
+                if (!iterator.MoveNext())
+                {
+                    yield break;
+                }
+                TSource previous = iterator.Current;
+                while (iterator.MoveNext())
+                {
+                    yield return projection(previous, iterator.Current);
+                    previous = iterator.Current;
+                }
+            }
+        }
+
+        public static async Task<IResult> GetMoneyByCounter(uint cnt, appContext db)
+        {
+            var query = await (from m in db.Measures
+                               where m.CounterRef == cnt
+                               orderby m.MDate ascending
+                               select new
+                               {
+                                   m.Value,
+                                   Tariff = (from t in db.Tariffs
+                                             join c in db.Counters on t.UslugaRef equals c.UslugaRef
+                                             where c.CounterId == cnt && t.TDate <= m.MDate
+                                             orderby t.TDate descending
+                                             select t.Price).FirstOrDefault()
+                               }).ToListAsync();
+
+//            var res=query.SelectWithPrevious((prev, cur) =>
+//                            new { cur.Value, money = (cur.Value - prev.Value) * cur.Tariff, cur.Tariff } );
+            decimal last = 0;
+            //          var res = query.Aggregate(last, (acc, it) => { last += (it.Value - acc) * it.Tariff; return it.Value; }, (acc) => (last));
+            var res=query.Skip(1).Zip(query, (curr, prev) => last += (curr.Value - prev.Value) * curr.Tariff).LastOrDefault(0);
+            return Results.Ok(res);
         }
         public static async Task<IResult> GetMeasure(uint id, appContext db)
         {

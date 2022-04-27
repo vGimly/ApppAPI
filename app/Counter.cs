@@ -19,11 +19,11 @@ namespace ApppAPI.app
         [JsonIgnore]
         public DateTime Alt { get; set; }
 
-//        [JsonIgnore]
-        public DateTime StartDate { get; set; }
-        
-//        [JsonIgnore]
-        public decimal InitValue { get; set; }
+        //        [JsonIgnore]
+        public DateTime StartDate { get; set; } = DateTime.MinValue;
+
+        //        [JsonIgnore]
+        public decimal InitValue { get; set; } = 0;
         
         [JsonIgnore]
         public virtual Usluga UslugaRefNavigation { get; set; } = null!;
@@ -39,5 +39,8 @@ namespace ApppAPI.app
             a.Precise = b.Precise;
             return a;
         }
+    }
+    public partial class Counter_with_initials : Counter
+    {
     }
 }
