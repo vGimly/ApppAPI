@@ -1,35 +1,34 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Globalization;
+using System.Text.Json;
 
 namespace ApppAPI.app
 {
     public static partial class appController
     {
-        internal static CultureInfo provider = new CultureInfo("en-US");
-
-    #region Usluga
-        public static async Task<List<Usluga>> GetUslugi(appContext db)
+        #region Usluga
+        public static async Task<IResult> GetUslugi(appContext db)
         {
-            return await db.Uslugas.ToListAsync();
+            return Results.Ok(await db.Uslugas.Select(u=> new {u.UslugaId, u.UslugaName}).ToListAsync());
         }
 
         public static async Task<IResult> GetUsluga(uint usl, appContext db)
         {
             return await db.Uslugas.FindAsync(usl)
-                    is Usluga obj
-                        ? Results.Ok(obj)
+                    is Usluga u
+                        ? Results.Ok(new { u.UslugaId, u.UslugaName })
                         : Results.NotFound();
         }
 
-        public static async Task<IResult> UpdUsluga(uint usl, Usluga u, appContext db)
+        public static async Task<IResult> UpdUsluga(uint usl, Usluga U, appContext db)
         {
             var obj = await db.Uslugas.FindAsync(usl);
             if (obj is null) return Results.NotFound();
-            obj ^= u;
+            obj ^= U;
             int changed = await db.SaveChangesAsync();
             return Results.Text("OK" + changed);
         }
-
+        
         public static async Task<IResult> DelUsluga(uint usl, appContext db)
         {
             var obj = await db.Uslugas.FindAsync(usl);
@@ -42,26 +41,24 @@ namespace ApppAPI.app
             return Results.Text("OK" + changed);
         }
 
-        public static async Task<IResult> AddUsluga(Usluga u, appContext db)
+        public static async Task<IResult> AddUsluga(Usluga U, appContext db)
         {
-            db.Uslugas.Add(u);
+            db.Uslugas.Add(U);
             await db.SaveChangesAsync();
-            return Results.Created($"/usluga/{u.UslugaId}", new { OK = u.UslugaId });
+            return Results.Created($"/usluga/{U.UslugaId}", new { OK = U.UslugaId });
         }
 
-    #endregion
+        #endregion
 
-    #region Tariff
+        #region Tariff
         internal static async Task<IResult> GetTariffByDate(uint usl, DateTime DTime, appContext db)
         {
-          DateOnly date = DateOnly.FromDateTime(DTime);
             try
             {
                 return Results.Ok(await db.Tariffs
-                    .Where(t => t.UslugaRef == usl && t.TDate <= date)
+                    .Where(t => t.UslugaRef == usl && t.TDate <= DTime)
                     .OrderByDescending(t => t.TDate)
-                    .Select(obj => obj.Price)
-                    .FirstAsync());
+                    .Select(obj => obj.Price).FirstAsync());
             }
             catch (Exception) { return Results.Text(""); }
         }
@@ -70,20 +67,19 @@ namespace ApppAPI.app
         {
             return await db.Tariffs.ToListAsync();
         }
-
         public static async Task<IResult> GetTariffsByUsluga(uint usl, appContext db)
         {
-            return Results.Ok(await db.Tariffs.Where(obj => obj.UslugaRef == usl).ToListAsync());
+            return Results.Ok(await db.Tariffs.Where(obj => obj.UslugaRef == usl)
+                .Select(t => new { t.TariffId, t.TDate, t.UslugaRef, t.Price})
+                .ToListAsync());
         }
-
         public static async Task<IResult> GetTariff(uint id, appContext db)
         {
             return await db.Tariffs.FindAsync(id)
-                    is Tariff obj
-                        ? Results.Ok(obj)
+                    is Tariff t
+                        ? Results.Ok(new { t.TariffId, t.TDate, t.UslugaRef, t.Price })
                         : Results.NotFound();
         }
-
         public static async Task<IResult> UpdTariff(uint id, Tariff t, appContext db)
         {
             var obj = await db.Tariffs.FindAsync(id);
@@ -105,37 +101,39 @@ namespace ApppAPI.app
             return Results.Text("OK" + changed);
         }
 
-        public static async Task<IResult> AddTariff(uint usl, Tariff t, appContext db)
+        public static async Task<IResult> AddTariff(uint usl, Tariff U, appContext db)
         {
-            db.Tariffs.Add(t);
+            db.Tariffs.Add(U);
             await db.SaveChangesAsync();
-            return Results.Created($"/tariff/{t.TariffId}", new { OK = t.TariffId });
+            return Results.Created($"/tariff/{U.TariffId}", new { OK = U.TariffId });
         }
-    #endregion
+        #endregion
 
-    #region Counter
-        public static async Task<List<Counter>> GetCounters(appContext db)
+        #region Counter
+        public static async Task<IResult> GetCounters(appContext db)
         {
-            return await db.Counters.ToListAsync();
+            return Results.Ok(await db.Counters
+                .Select(u => new { u.CounterId, u.UslugaRef, u.CounterName, u.Serial, u.Precise, u.Digits })
+                .ToListAsync());
         }
-
         public static async Task<IResult> GetCountersByUsluga(uint usl, appContext db)
         {
-            return Results.Ok(await db.Counters.Where(obj => obj.UslugaRef == usl).ToListAsync());
+            return Results.Ok(await db.Counters.Where(obj => obj.UslugaRef == usl)
+                .Select(u=>new {u.CounterId, u.UslugaRef, u.CounterName, u.Serial, u.Precise, u.Digits})
+                .ToListAsync());
         }
-
         public static async Task<IResult> GetCounter(uint id, appContext db)
         {
             return await db.Counters.FindAsync(id)
-                    is Counter obj
-                        ? Results.Ok(obj)
+                    is Counter u
+                        ? Results.Ok(new { u.CounterId, u.UslugaRef, u.CounterName, u.Serial, u.Precise, u.Digits })
                         : Results.NotFound();
         }
-        public static async Task<IResult> UpdCounter(uint id, Counter cnt, appContext db)
+        public static async Task<IResult> UpdCounter(uint id, Counter t, appContext db)
         {
             var obj = await db.Counters.FindAsync(id);
             if (obj is null) return Results.NotFound();
-            obj ^= cnt;
+            obj ^= t;
             int changed = await db.SaveChangesAsync();
             return Results.Text("OK" + changed);
         }
@@ -152,37 +150,59 @@ namespace ApppAPI.app
             return Results.Text("OK" + changed);
         }
 
-        public static async Task<IResult> AddCounter(uint usl, Counter cnt, appContext db)
+        //public static async Task<T> Deserialize<T>(Stream s)
+        //{
+        //    return await JsonSerializer.DeserializeAsync<T>(s); // ,new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+        //    var U = await Deserialize<Counter>(ctx.Request.Body);
+        //}
+        public static async Task<IResult> AddCounter(uint usl, Counter U, appContext db)
         {
-            db.Counters.Add(cnt);
+            db.Counters.Add(U);
             await db.SaveChangesAsync();
-            return Results.Created($"/counter/{cnt.CounterId}", new { OK = cnt.CounterId });
+            var M = new Measure { CounterRef = U.CounterId, MDate = U.StartDate, Value = U.InitValue };
+            db.Measures.Add(M);
+            await db.SaveChangesAsync();
+            return Results.Created($"/counter/{U.CounterId}", new { OK = U.CounterId, mea= M.MId });
         }
-    #endregion
+        #endregion
 
-    #region Measure
-        public static async Task<List<Measure>> GetMeasures(appContext db)
+        #region Measure
+        public static async Task<IResult> GetMeasures(appContext db)
         {
-            return await db.Measures.ToListAsync();
+            return Results.Ok(await db.Measures
+                .Select(m => new {m.MId, m.CounterRef, m.MDate, m.Value})
+                .ToListAsync()
+                .ConfigureAwait(false));
         }
 
         public static async Task<IResult> GetMeasuresByCounter(uint cnt, appContext db)
         {
-            return Results.Ok(await db.Measures.Where(obj => obj.CounterRef == cnt).ToListAsync());
+            var query = from m in db.Measures
+                        where m.CounterRef == cnt
+                        join s in (
+                            from p in db.Measures
+                            group p by p.CounterRef into g
+                            select new { CounterRef = g.Key, InitValue = g.Min(x => x.Value) } // InitDate = g.Min(x => x.MDate), 
+                        ) on m.CounterRef equals s.CounterRef
+                        select new { m.CounterRef, m.MId, m.MDate, m.Value, s.InitValue,
+                            Tariff = (from t in db.Tariffs join c in db.Counters on t.UslugaRef equals c.UslugaRef
+                                      where c.CounterId == cnt && t.TDate <= m.MDate
+                                      orderby t.TDate descending select t.Price).First()
+                        };
+            return Results.Ok(await query.ToListAsync());
         }
-
         public static async Task<IResult> GetMeasure(uint id, appContext db)
         {
             return await db.Measures.FindAsync(id)
-                    is Measure obj
-                        ? Results.Ok(obj)
+                    is Measure m
+                        ? Results.Ok(new { m.MId, m.CounterRef, m.MDate, m.Value })
                         : Results.NotFound();
         }
-        public static async Task<IResult> UpdMeasure(uint id, Measure m, appContext db)
+        public static async Task<IResult> UpdMeasure(uint id, Measure U, appContext db)
         {
             var obj = await db.Measures.FindAsync(id);
             if (obj is null) return Results.NotFound();
-            obj ^= m;
+            obj ^= U;
             int changed = await db.SaveChangesAsync();
             return Results.Text("OK" + changed);
         }
@@ -199,13 +219,13 @@ namespace ApppAPI.app
             return Results.Text("OK" + changed);
         }
 
-        public static async Task<IResult> AddMeasure(uint cnt, Measure m, appContext db)
+        public static async Task<IResult> AddMeasure(uint cnt, Measure U, appContext db)
         {
-            db.Measures.Add(m);
+            db.Measures.Add(U);
             await db.SaveChangesAsync();
-            return Results.Created($"/measure/{m.MId}", new { OK = m.MId });
+            return Results.Created($"/measure/{U.MId}", new { OK = U.MId });
         }
-    #endregion
+        #endregion
 
     }
 }

@@ -4,7 +4,7 @@
     {
         public uint MId { get; set; }
         public uint CounterRef { get; set; }
-        public DateOnly MDate { get; set; }
+        public DateTime MDate { get; set; }
         public decimal Value { get; set; }
         public DateTime Alt { get; set; }
         public virtual Counter CounterRefNavigation { get; set; } = null!;

@@ -18,18 +18,10 @@ namespace ApppAPI.app
         public virtual DbSet<Tariff> Tariffs { get; set; } = null!;
         public virtual DbSet<Usluga> Uslugas { get; set; } = null!;
 
-        public IQieryable Tbl(Type T) { switch(nameof(T)) {
-                case nameof(Counter): return Counters;
-                case nameof(Measure): return Measures;
-                case nameof(Tariff): return Tariffs;
-                case nameof(Usluga): return Uslugas;
-                default: return null; } }
-
-
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
-            { throw "Must be configured in Program.cs" }
+            { throw new Exception("Must be configured in Program.cs"); }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -39,7 +31,9 @@ namespace ApppAPI.app
 
             modelBuilder.Entity<Counter>(entity =>
             {
-                entity.ToTable("counters");
+                entity.ToTable("counters")
+                     .Ignore(e => e.InitValue)
+                     .Ignore(e => e.StartDate);
 
                 entity.HasIndex(e => new { e.CounterName, e.Serial }, "counter_name_serial")
                     .IsUnique()

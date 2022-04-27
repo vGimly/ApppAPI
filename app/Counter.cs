@@ -15,6 +15,8 @@
         public byte Precise { get; set; }
         public DateTime Alt { get; set; }
 
+        public DateTime StartDate { get; set; }
+        public decimal InitValue { get; set; }
         public virtual Usluga UslugaRefNavigation { get; set; } = null!;
         public virtual ICollection<Measure> Measures { get; set; }
         public static Counter operator ^(Counter a, Counter b)

@@ -4,7 +4,7 @@
     {
         public uint TariffId { get; set; }
         public uint UslugaRef { get; set; }
-        public DateOnly TDate { get; set; }
+        public DateTime TDate { get; set; }
         public decimal Price { get; set; }
         public DateTime Alt { get; set; }
         public virtual Usluga UslugaRefNavigation { get; set; } = null!;
