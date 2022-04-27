@@ -9,14 +9,14 @@ namespace ApppAPI.app
         #region Usluga
         public static async Task<IResult> GetUslugi(appContext db)
         {
-            return Results.Ok(await db.Uslugas.Select(u=> new {u.UslugaId, u.UslugaName}).ToListAsync());
+            return Results.Ok(await db.Uslugas.ToListAsync());
         }
 
         public static async Task<IResult> GetUsluga(uint usl, appContext db)
         {
             return await db.Uslugas.FindAsync(usl)
                     is Usluga u
-                        ? Results.Ok(new { u.UslugaId, u.UslugaName })
+                        ? Results.Ok(u)
                         : Results.NotFound();
         }
 
@@ -70,14 +70,14 @@ namespace ApppAPI.app
         public static async Task<IResult> GetTariffsByUsluga(uint usl, appContext db)
         {
             return Results.Ok(await db.Tariffs.Where(obj => obj.UslugaRef == usl)
-                .Select(t => new { t.TariffId, t.TDate, t.UslugaRef, t.Price})
+//                .Select(t => new { t.TariffId, t.TDate, t.UslugaRef, t.Price})
                 .ToListAsync());
         }
         public static async Task<IResult> GetTariff(uint id, appContext db)
         {
             return await db.Tariffs.FindAsync(id)
                     is Tariff t
-                        ? Results.Ok(new { t.TariffId, t.TDate, t.UslugaRef, t.Price })
+                        ? Results.Ok(t) // new { t.TariffId, t.TDate, t.UslugaRef, t.Price })
                         : Results.NotFound();
         }
         public static async Task<IResult> UpdTariff(uint id, Tariff t, appContext db)
@@ -113,20 +113,20 @@ namespace ApppAPI.app
         public static async Task<IResult> GetCounters(appContext db)
         {
             return Results.Ok(await db.Counters
-                .Select(u => new { u.CounterId, u.UslugaRef, u.CounterName, u.Serial, u.Precise, u.Digits })
+//                .Select(u => new { u.CounterId, u.UslugaRef, u.CounterName, u.Serial, u.Precise, u.Digits })
                 .ToListAsync());
         }
         public static async Task<IResult> GetCountersByUsluga(uint usl, appContext db)
         {
             return Results.Ok(await db.Counters.Where(obj => obj.UslugaRef == usl)
-                .Select(u=>new {u.CounterId, u.UslugaRef, u.CounterName, u.Serial, u.Precise, u.Digits})
+                //.Select(u=>new {u.CounterId, u.UslugaRef, u.CounterName, u.Serial, u.Precise, u.Digits})
                 .ToListAsync());
         }
         public static async Task<IResult> GetCounter(uint id, appContext db)
         {
             return await db.Counters.FindAsync(id)
                     is Counter u
-                        ? Results.Ok(new { u.CounterId, u.UslugaRef, u.CounterName, u.Serial, u.Precise, u.Digits })
+                        ? Results.Ok(u) // new { u.CounterId, u.UslugaRef, u.CounterName, u.Serial, u.Precise, u.Digits })
                         : Results.NotFound();
         }
         public static async Task<IResult> UpdCounter(uint id, Counter t, appContext db)
@@ -157,10 +157,9 @@ namespace ApppAPI.app
         //}
         public static async Task<IResult> AddCounter(uint usl, Counter U, appContext db)
         {
+            var M= new Measure { MDate = U.StartDate, Value = U.InitValue };
+            U.Measures.Add(M);
             db.Counters.Add(U);
-            await db.SaveChangesAsync();
-            var M = new Measure { CounterRef = U.CounterId, MDate = U.StartDate, Value = U.InitValue };
-            db.Measures.Add(M);
             await db.SaveChangesAsync();
             return Results.Created($"/counter/{U.CounterId}", new { OK = U.CounterId, mea= M.MId });
         }
@@ -170,9 +169,10 @@ namespace ApppAPI.app
         public static async Task<IResult> GetMeasures(appContext db)
         {
             return Results.Ok(await db.Measures
-                .Select(m => new {m.MId, m.CounterRef, m.MDate, m.Value})
+                //.Select(m => new {m.MId, m.CounterRef, m.MDate, m.Value})
                 .ToListAsync()
-                .ConfigureAwait(false));
+                .ConfigureAwait(false)
+                );
         }
 
         public static async Task<IResult> GetMeasuresByCounter(uint cnt, appContext db)
