@@ -29,6 +29,7 @@ export default { name: 'counters',
 		js.forEach(c=>{
 		    if (!this.selected && this.counter && c.counterId === this.counter)
 			this.selected=c;
+		    c.startDate=c.startDate.replace(/T.*/,'');
 		    c.initValue=this.$parent.format(c.initValue,c.precise,c.digits);
 		});
 	    })
