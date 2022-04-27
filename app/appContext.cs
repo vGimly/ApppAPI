@@ -18,14 +18,18 @@ namespace ApppAPI.app
         public virtual DbSet<Tariff> Tariffs { get; set; } = null!;
         public virtual DbSet<Usluga> Uslugas { get; set; } = null!;
 
+        public IQieryable Tbl(Type T) { switch(nameof(T)) {
+                case nameof(Counter): return Counters;
+                case nameof(Measure): return Measures;
+                case nameof(Tariff): return Tariffs;
+                case nameof(Usluga): return Uslugas;
+                default: return null; } }
+
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
-            {
-//		var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-//              optionsBuilder.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
-			// Microsoft.EntityFrameworkCore.ServerVersion.Parse("5.7.29-mysql"));
-            }
+            { throw "Must be configured in Program.cs" }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

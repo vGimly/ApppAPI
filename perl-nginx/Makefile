@@ -1,4 +1,4 @@
 run:
-	screen -dmS app morbo -v -l http://*:3000 app.pl
+	screen -dmS app2 morbo -v -l http://*:3001 app.pl
 nginx:
 	sudo service nginx reload
