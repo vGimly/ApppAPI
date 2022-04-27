@@ -18,6 +18,13 @@ namespace ApppAPI.app
         public virtual DbSet<Tariff> Tariffs { get; set; } = null!;
         public virtual DbSet<Usluga> Uslugas { get; set; } = null!;
 
+        public object? Tbl(Type T) { switch(T.Name) {
+                case nameof(Counter): return Counters;
+                case nameof(Measure): return Measures;
+                case nameof(Tariff): return Tariffs;
+                case nameof(Usluga): return Uslugas;
+                default: return null; } } 
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)

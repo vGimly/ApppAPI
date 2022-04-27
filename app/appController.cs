@@ -8,15 +8,15 @@ namespace ApppAPI.app
         internal static CultureInfo provider = new CultureInfo("en-US");
 
         #region Usluga
-        public static async Task<List<usluga>> GetUslugi(appContext db)
+        public static async Task<List<Usluga>> GetUslugi(appContext db)
         {
-            return await db.Uslugas.Select(obj => new usluga(obj)).ToListAsync();
+            return await db.Uslugas.ToListAsync();
         }
         public static async Task<IResult> GetUsluga(uint usl, appContext db)
         {
             return await db.Uslugas.FindAsync(usl)
                     is Usluga obj
-                        ? Results.Ok(new usluga(obj))
+                        ? Results.Ok(obj)
                         : Results.NotFound();
         }
 
@@ -68,6 +68,11 @@ namespace ApppAPI.app
             }
             catch (Exception) { return Results.Text(""); }
         }
+        public static async Task<IResult> GetTable<T>(uint id, appContext db)
+        {
+            return await db.Tbl(typeof(T)).ToListAsync();
+        }
+
         public static async Task<List<tariff>> GetTariffs(appContext db)
         {
             return await db.Tariffs.Select(obj => new tariff(obj)).ToListAsync();
