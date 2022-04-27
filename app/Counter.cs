@@ -1,4 +1,6 @@
-﻿namespace ApppAPI.app
+﻿using System.Text.Json.Serialization;
+
+namespace ApppAPI.app
 {
     public partial class Counter
     {
@@ -13,12 +15,22 @@
         public string Serial { get; set; } = null!;
         public byte Digits { get; set; }
         public byte Precise { get; set; }
+        
+        [JsonIgnore]
         public DateTime Alt { get; set; }
 
-        public DateTime StartDate { get; set; }
-        public decimal InitValue { get; set; }
+        //        [JsonIgnore]
+        public DateTime StartDate { get; set; } = DateTime.MinValue;
+
+        //        [JsonIgnore]
+        public decimal InitValue { get; set; } = 0;
+        
+        [JsonIgnore]
         public virtual Usluga UslugaRefNavigation { get; set; } = null!;
+        
+        [JsonIgnore]
         public virtual ICollection<Measure> Measures { get; set; }
+        
         public static Counter operator ^(Counter a, Counter b)
         {
             a.CounterName = b.CounterName;
@@ -27,5 +39,8 @@
             a.Precise = b.Precise;
             return a;
         }
+    }
+    public partial class Counter_with_initials : Counter
+    {
     }
 }

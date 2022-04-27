@@ -61,4 +61,6 @@ app.MapGet("/counter/undefined/measure", appController.GetMeasure);
 app.MapGet("/counter/{cnt:int}/measure", appController.GetMeasuresByCounter);
 app.MapPost("/counter/{cnt:int}/measure", appController.AddMeasure);
 
+app.MapGet("/counter/{cnt:int}/money", appController.GetMoneyByCounter);
+
 await app.RunAsync();

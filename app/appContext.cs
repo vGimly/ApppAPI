@@ -14,6 +14,7 @@ namespace ApppAPI.app
         }
 
         public virtual DbSet<Counter> Counters { get; set; } = null!;
+        public virtual DbSet<Counter_with_initials> Counter2 { get; set; } = null!;
         public virtual DbSet<Measure> Measures { get; set; } = null!;
         public virtual DbSet<Tariff> Tariffs { get; set; } = null!;
         public virtual DbSet<Usluga> Uslugas { get; set; } = null!;
@@ -76,6 +77,55 @@ namespace ApppAPI.app
                     .HasForeignKey(d => d.UslugaRef)
                     .OnDelete(DeleteBehavior.ClientNoAction)
                     .HasConstraintName("usluga");
+            });
+
+            modelBuilder.Entity<Counter_with_initials>(entity =>
+            {
+                entity.ToTable("counter_with_initials");
+
+                entity.HasIndex(e => new { e.CounterName, e.Serial }, "counter_name_serial")
+                    .IsUnique()
+                    .HasAnnotation("MySql:IndexPrefixLength", new[] { 128, 64 });
+
+                entity.HasIndex(e => e.UslugaRef, "tariff_ref");
+
+                entity.Property(e => e.CounterId)
+                    .HasColumnType("int(10) unsigned")
+                    .HasColumnName("counter_id");
+
+                entity.Property(e => e.Alt)
+                    .HasColumnType("timestamp")
+                    .ValueGeneratedOnAddOrUpdate()
+                    .HasColumnName("alt")
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                entity.Property(e => e.CounterName)
+                    .HasColumnType("text")
+                    .HasColumnName("counter_name");
+
+                entity.Property(e => e.Digits)
+                    .HasColumnType("tinyint(3) unsigned")
+                    .HasColumnName("digits");
+
+                entity.Property(e => e.Precise)
+                    .HasColumnType("tinyint(3) unsigned")
+                    .HasColumnName("precise");
+
+                entity.Property(e => e.Serial)
+                    .HasColumnType("text")
+                    .HasColumnName("serial");
+
+                entity.Property(e => e.UslugaRef)
+                    .HasColumnType("int(10) unsigned")
+                    .HasColumnName("usluga_ref");
+
+                entity.Property(e => e.StartDate)
+                    .HasColumnName("start_date");
+
+                entity.Property(e => e.InitValue)
+                    .HasColumnType("decimal(20,6) unsigned")
+                    .HasColumnName("init_value");
+
             });
 
             modelBuilder.Entity<Measure>(entity =>
