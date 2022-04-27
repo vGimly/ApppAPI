@@ -4,7 +4,7 @@ export default { name: 'uslugi',
   data() {
     return {
 //    UColumns: [ 'usluga_id', 'usluga_name' ],
-      UColumns: [ 'UslugaName' ],
+      UColumns: [ 'uslugaName' ],
       newName: '',
       selected: null,
       showModal: false, timer: null, delay: 400,
@@ -13,7 +13,7 @@ export default { name: 'uslugi',
   },
   methods: {
     notifyParent(){
-	this.$emit('selected',this.selected && this.selected.UslugaId);
+	this.$emit('selected',this.selected && this.selected.uslugaId);
     },
     select(u) {
         if (this.timer && this.selected === u) {
@@ -30,9 +30,11 @@ export default { name: 'uslugi',
     do_select(u) {
 	this.selected=u;
 	this.notifyParent();
-	if (u) this.newName=u.UslugaName;
+	if (u) this.newName=u.uslugaName;
     },
-
+    fill(sel){
+	sel.uslugaName=this.newName;
+    },
     show_modal(){
 	this.showModal=true;
 	Vue.nextTick(()=>this.$refs.first.focus());
@@ -53,13 +55,16 @@ export default { name: 'uslugi',
     },
 
     async add(e) {
-	this.showModal=false;
 	const form=this.$refs.form || e.target.form || e.target;
+	const query=Object.fromEntries(new FormData(form).entries());
+	this.showModal=false;
+	delete query.uslugaId;
 	fetch(form.action,{method: form.method,  headers: {'Content-Type':'application/json'},
-            body: JSON.stringify(Object.fromEntries(new FormData(form).entries()))})
+            body: JSON.stringify(query)})
 	 .then(res => res.json())
 	 .then(j => {
-		this.selected={UslugaId: j['OK']||j['ok'], UslugaName: this.newName};
+		this.selected={uslugaId: j['ok']};
+		this.fill(this.selected);
 		this.data.push(this.selected);
 		this.notifyParent();
 		})
@@ -70,11 +75,11 @@ export default { name: 'uslugi',
 	this.showModal=false;
 	const form=this.$refs.form || e.target.form || e.target;
 	const sel=this.selected;
-	fetch(form.action+sel.UslugaId,{method: 'PUT', headers: {'Content-Type':'application/json'},
+	fetch(form.action+sel.uslugaId,{method: 'PUT', headers: {'Content-Type':'application/json'},
             body: JSON.stringify(Object.fromEntries(new FormData(form).entries()))})
 	 .then(res => res.text())
 	 .then(res => {if (!res.startsWith('OK')) throw res;
-		    sel.UslugaName=this.newName;
+			this.fill(sel);
 		})
 	.catch(e=>this.$parent.alert(e));
     },
@@ -83,7 +88,7 @@ export default { name: 'uslugi',
 	this.showModal=false;
 	const form=this.$refs.form || e.target.form || e.target;
 	const sel=this.selected;
-	fetch(form.action+sel.UslugaId,{method: 'DELETE'})
+	fetch(form.action+sel.uslugaId,{method: 'DELETE'})
 	 .then(res => res.text() )
 	 .then(res => { if (!res.startsWith('OK')) throw res;
 			this.data = this.data.filter(a=>a!==sel);
@@ -102,14 +107,14 @@ template: `
   <div class="modal-card">
 <form ref=form @submit.prevent="submit" method=POST action="api/usluga/">
     <input type=submit style="display:none" title="to-catch-enter"/>
-    <input type=hidden name=UslugaId :value="selected && selected.UslugaId" />
+    <input type=hidden name=uslugaId :value="selected && selected.uslugaId" />
     <header class="modal-card-head">
     <p class="modal-card-title">Услуга</p>
     <button class="delete" aria-label="close" @click.prevent="showModal=false"></button>
     </header>
     <section class="modal-card-body">
 	<table class="table">
-	<tr><td><label for=usluga-name>Наименовение услуги:</label></td><td><input id=usluga-name name=UslugaName v-model="newName" ref=first></td></tr>
+	<tr><td><label for=usluga-name>Наименовение услуги:</label></td><td><input id=usluga-name name=uslugaName v-model="newName" ref=first></td></tr>
 	</table>
     </section>
 	<footer class="modal-card-foot">
@@ -126,7 +131,7 @@ template: `
   <table v-if="!!data" class="table is-bordered is-hoverable" id="uslugi">
     <thead @click="do_select(null)"><tr><th v-for="key in UColumns">{{key}}</th></tr></thead>
     <tbody>
-      <tr v-for="u in data" @click="select(u)" :key="u.UslugaId" :class="{ 'is-selected': u.UslugaId === usluga }">
+      <tr v-for="u in data" @click="select(u)" :key="u.uslugaId" :class="{ 'is-selected': u.uslugaId === usluga }">
         <td v-for="key in UColumns" :id="key">
           {{u[key]}}
         </td>

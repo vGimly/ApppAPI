@@ -13,8 +13,8 @@ methods: {
     uslugaEvent (value) { this.usluga = value; this.counter=null; },
     counterEvent (value) {
 		this.counter_obj = value;
-		this.counter=value ? value.CounterId: null;
-		if (!this.usluga) this.usluga=value.UslugaRef;
+		this.counter=value ? value.counterId: null;
+		if (!this.usluga) this.usluga=value.uslugaRef;
     },
     format_def(value) { return isNaN(value)?'':this.counter_obj? this.format(value, this.counter_obj.precise, this.counter_obj.digits) : value},
     format(value,prec,dig){return isNaN(value)?'':new Intl.NumberFormat('en-US', { minimumFractionDigits: prec, maximumFractionDigits: prec }).format(value).padStart(dig+prec+1,'0')},

@@ -3,7 +3,7 @@ export default { name: 'measures',
   data() {
     return {
 //      UColumns: [ `counter_ref`,`m_id`,`m_date`,`value`,`digits`,`precise`,`init_value`,`tarif` ],
-      UColumns: [ `MDate`,`Value`,`Init`,`Tariff`,`Money` ],
+      UColumns: [ `mDate`,`value`,`init`,`tariff`,`money` ],
       selected: null,
       newDate: '',
       newValue: '',
@@ -23,14 +23,14 @@ export default { name: 'measures',
 	 .then(js => { this.data = js;
 			var prev=null;
 			var money=0;
-			js.forEach(j=>{ if (!prev) prev=j.Value;
-					const m=(j.Value-prev)*j.Tariff;
-					j.Init=this.$parent.format_def(prev);
-					j.MDate=j.MDate.replace(/T.*$/,'');
-					prev=j.Value;
+			js.forEach(j=>{ if (!prev) prev=j.value;
+					const m=(j.value-prev)*j.tariff;
+					j.init=this.$parent.format_def(prev);
+					j.mDate=j.mDate.replace(/T.*$/,'');
+					prev=j.value;
 					money+=m;
-					j.Money=Math.floor(m*100+.5)/100;
-					j.Value=this.$parent.format_def(j.Value)});
+					j.money=Math.floor(m*100+.5)/100;
+					j.value=this.$parent.format_def(j.value)});
 			this.money=Math.floor(money*100000+.5)/100000;
 		  })
 	 .catch(a=>this.$parent.alert(a));
@@ -46,23 +46,25 @@ export default { name: 'measures',
 		    return res.text().then(res => window.open("","err",`width=800,height=400,screenX=200,screenY=200`).document.body.innerHTML=res );
 		return res.text()})
 	 .then(res=>{ this.tariff=res;
-		if (this.selected.MDate === this.newDate && !this.selected.Tariff)
-		    this.selected.Tariff=res;
+		if (this.selected.mDate === this.newDate && !this.selected.tariff)
+		    this.selected.tariff=res;
 		})
 	 .catch(a=>this.$parent.alert(a));
     },
 
     async add(e) {
 	const form=this.$refs.form || e.target.form || e.target;
+	const query=Object.fromEntries(new FormData(form).entries());
+	delete query.mId;
 	this.showModal=false;
 	fetch(form.action.replace(/\b\d+\b/,this.counter),{method: form.method, headers: {'Content-Type':'application/json'},
-            body: JSON.stringify(Object.fromEntries(new FormData(form).entries()))})
+            body: JSON.stringify(query)})
 	 .then(res => {const ct=res.headers.get('content-type');
 		if(!(res.status === 200 || res.status === 201) || !ct || ct.indexOf('application/json') === -1)
 		    return res.text();
 		else return res.json()})
 	 .then(j => { if (typeof j !== 'object') throw(j);
-		this.selected={MId: j['OK']||j['ok']};
+		this.selected={mId: j['ok']};
 		this.fill(this.selected,true);
 		this.data.push(this.selected);
 		})
@@ -74,7 +76,7 @@ export default { name: 'measures',
 	const sel=this.selected;
 	const foru=this.$refs.foru;
 	this.showModal=false;
-	fetch(foru.action+sel.MId,{method: 'PUT', headers: {'Content-Type':'application/json'},
+	fetch(foru.action+sel.mId,{method: 'PUT', headers: {'Content-Type':'application/json'},
             body: JSON.stringify(Object.fromEntries(new FormData(form).entries()))})
 	 .then(res => res.text())
 	 .then(res => { if (!res.startsWith('OK')) throw(res);
@@ -88,7 +90,7 @@ export default { name: 'measures',
 	const sel=this.selected;
 	const foru=this.$refs.foru;
 	this.showModal=false;
-	fetch(foru.action+sel.MId,{method: 'DELETE'})
+	fetch(foru.action+sel.mId,{method: 'DELETE'})
 	 .then(res => res.text() )
 	 .then(res => { if (!res.startsWith('OK')) throw(res)
 			this.data = this.data.filter(a=>a!==sel);
@@ -111,12 +113,12 @@ export default { name: 'measures',
     },
 
     fill(sel,full){
-	var needCalc=!sel.MDate || sel.MDate !== this.newDate;
+	var needCalc=!sel.mDate || sel.mDate !== this.newDate;
 	sel.value=this.$parent.format_def(this.newValue);
-	sel.m_date=this.newDate;
+	sel.mDate=this.newDate;
 
 	if (full)
-	sel.CounterId=this.counter;
+	sel.counterId=this.counter;
 
 	if (needCalc) this.fetchPrice();
     },
@@ -124,9 +126,9 @@ export default { name: 'measures',
     do_select(u) {
 	this.selected=u;
 	if (u){
-	this.newValue=u.Value;
-	this.newDate=u.MDate;
-	if (u.Tariff) this.tariff=u.Tariff;
+	this.newValue=u.value;
+	this.newDate=u.mDate;
+	if (u.tariff) this.tariff=u.tariff;
 	else this.fetchPrice();
 	}
     },
@@ -154,7 +156,8 @@ template: `
 <form ref=foru action="api/measure/"></form>
 <form ref=form @submit.prevent="add" method=POST action="api/counter/0/measure">
 <input type=submit style="display:none" title="to-catch-enter"/>
-<input type=hidden name="CounterRef" :value="counter" />
+<input type=hidden name="mId" :value="selected && selected.mId" />
+<input type=hidden name="counterRef" :value="counter" />
 
     <header class="modal-card-head">
     <p class="modal-card-title">Показания счётчика</p>
@@ -163,8 +166,8 @@ template: `
 
     <section class="modal-card-body">
         <table class="table">
-        <tr><td><label for=m-date>Дата:</label></td><td><input id=m-date name=MDate v-model="newDate" type=date @change="fetchPrice"></td></tr>
-        <tr><td><label for=value>Показания:</label></td><td><input id=value name=Value v-model="newValue" ref=first></td></tr>
+        <tr><td><label for=m-date>Дата:</label></td><td><input id=m-date name=mDate v-model="newDate" type=date @change="fetchPrice"></td></tr>
+        <tr><td><label for=value>Показания:</label></td><td><input id=value name=value v-model="newValue" ref=first></td></tr>
 	<tr><td>Действущий тариф:</td><td title="Выбрать дату">{{ tariff }}</td></tr>
         </table>
     </section>
@@ -185,7 +188,7 @@ template: `
   <table v-if="!!data" class="table is-bordered is-hoverable" id="measures">
     <thead><tr><th v-for="key in UColumns">{{key}}</th></tr></thead>
     <tbody>
-      <tr v-for="u in data" @click="select(u)" :key="u.MId" :class="{ 'is-selected': selected === u }">
+      <tr v-for="u in data" @click="select(u)" :key="u.mId" :class="{ 'is-selected': selected === u }">
         <td v-for="key in UColumns" :id="key">
           {{u[key]}}
         </td>
