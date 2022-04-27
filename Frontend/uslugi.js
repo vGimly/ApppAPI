@@ -4,7 +4,7 @@ export default { name: 'uslugi',
   data() {
     return {
 //    UColumns: [ 'usluga_id', 'usluga_name' ],
-      UColumns: [ 'usluga_name' ],
+      UColumns: [ 'UslugaName' ],
       newName: '',
       selected: null,
       showModal: false, timer: null, delay: 400,
@@ -13,7 +13,7 @@ export default { name: 'uslugi',
   },
   methods: {
     notifyParent(){
-	this.$emit('selected',this.selected && this.selected.usluga_id);
+	this.$emit('selected',this.selected && this.selected.UslugaId);
     },
     select(u) {
         if (this.timer && this.selected === u) {
@@ -30,7 +30,7 @@ export default { name: 'uslugi',
     do_select(u) {
 	this.selected=u;
 	this.notifyParent();
-	if (u) this.newName=u.usluga_name;
+	if (u) this.newName=u.UslugaName;
     },
 
     show_modal(){
@@ -55,10 +55,11 @@ export default { name: 'uslugi',
     async add(e) {
 	this.showModal=false;
 	const form=this.$refs.form || e.target.form || e.target;
-	fetch(form.action,{method: form.method, body: new FormData(form)})
+	fetch(form.action,{method: form.method,  headers: {'Content-Type':'application/json'},
+            body: JSON.stringify(Object.fromEntries(new FormData(form).entries()))})
 	 .then(res => res.json())
 	 .then(j => {
-		this.selected={usluga_id: j['OK']||j['ok'], usluga_name: this.newName};
+		this.selected={UslugaId: j['OK']||j['ok'], UslugaName: this.newName};
 		this.data.push(this.selected);
 		this.notifyParent();
 		})
@@ -69,10 +70,11 @@ export default { name: 'uslugi',
 	this.showModal=false;
 	const form=this.$refs.form || e.target.form || e.target;
 	const sel=this.selected;
-	fetch(form.action+sel.usluga_id,{method: 'PUT', body: new FormData(form)})
+	fetch(form.action+sel.UslugaId,{method: 'PUT', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify(Object.fromEntries(new FormData(form).entries()))})
 	 .then(res => res.text())
 	 .then(res => {if (!res.startsWith('OK')) throw res;
-		    sel.usluga_name=this.newName;
+		    sel.UslugaName=this.newName;
 		})
 	.catch(e=>this.$parent.alert(e));
     },
@@ -81,7 +83,7 @@ export default { name: 'uslugi',
 	this.showModal=false;
 	const form=this.$refs.form || e.target.form || e.target;
 	const sel=this.selected;
-	fetch(form.action+sel.usluga_id,{method: 'DELETE'})
+	fetch(form.action+sel.UslugaId,{method: 'DELETE'})
 	 .then(res => res.text() )
 	 .then(res => { if (!res.startsWith('OK')) throw res;
 			this.data = this.data.filter(a=>a!==sel);
@@ -100,13 +102,14 @@ template: `
   <div class="modal-card">
 <form ref=form @submit.prevent="submit" method=POST action="api/usluga/">
     <input type=submit style="display:none" title="to-catch-enter"/>
+    <input type=hidden name=UslugaId :value="selected && selected.UslugaId" />
     <header class="modal-card-head">
     <p class="modal-card-title">Услуга</p>
     <button class="delete" aria-label="close" @click.prevent="showModal=false"></button>
     </header>
     <section class="modal-card-body">
 	<table class="table">
-	<tr><td><label for=usluga-name>Наименовение услуги:</label></td><td><input ref=first id=usluga-name name=usluga-name v-model="newName"></td></tr>
+	<tr><td><label for=usluga-name>Наименовение услуги:</label></td><td><input id=usluga-name name=UslugaName v-model="newName" ref=first></td></tr>
 	</table>
     </section>
 	<footer class="modal-card-foot">
@@ -123,7 +126,7 @@ template: `
   <table v-if="!!data" class="table is-bordered is-hoverable" id="uslugi">
     <thead @click="do_select(null)"><tr><th v-for="key in UColumns">{{key}}</th></tr></thead>
     <tbody>
-      <tr v-for="u in data" @click="select(u)" :key="u.usluga_id" :class="{ 'is-selected': u.usluga_id === usluga }">
+      <tr v-for="u in data" @click="select(u)" :key="u.UslugaId" :class="{ 'is-selected': u.UslugaId === usluga }">
         <td v-for="key in UColumns" :id="key">
           {{u[key]}}
         </td>
