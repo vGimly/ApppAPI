@@ -9,6 +9,7 @@ export default { name: 'measures',
       newValue: '',
       tariff: ' ...',
       money: 0,
+      s_money: 0,
       showModal: false, timer: null, delay: 400,
       data: null
     }
@@ -49,6 +50,13 @@ export default { name: 'measures',
 		if (this.selected.mDate === this.newDate && !this.selected.tariff)
 		    this.selected.tariff=res;
 		})
+	 .catch(a=>this.$parent.alert(a));
+    },
+
+    async fetchMoney(e) {
+	fetch(`api/counter/${this.counter}/money`)
+	 .then(res=>res.text())
+	 .then(res=>this.s_money=res)
 	 .catch(a=>this.$parent.alert(a));
     },
 
@@ -154,6 +162,7 @@ export default { name: 'measures',
   mounted() {
     if (this.usluga && this.counter)
 	this.fetchData();
+    if (this.counter) this.fetchMoney();
   },
 
 template: `
@@ -191,7 +200,7 @@ template: `
     title="Для добавления выбрать счётчик. Редактирование - двойной клик.">+</button><p class="card-header-title">Показания</p></header>
 <div class="box card-content">
   <p v-if="!data && !(usluga && counter)">Выбрать услугу и счётчик...</p>
-  <p v-else>Total: {{ money }}</p>
+  <p v-else>Total: {{ money }} Server: {{ s_money }}</p>
   <table v-if="!!data" class="table is-bordered is-hoverable" id="measures">
     <thead><tr><th v-for="key in UColumns">{{key}}</th></tr></thead>
     <tbody>
