@@ -4,7 +4,7 @@ export default { name: 'counters',
     return {
 //      UColumns: [ `counter_id`,`usluga_ref`,`counter_name`,`serial`,`digits`,`precise`,`start_date`,`init_value` ],
 //      UColumns: [ `counter_name`,`serial`,`digits`,`precise` ],
-      UColumns: [ `CounterName`,`Serial`,`Digits`,`Precise`,`StartDate`,`InitValue` ],
+      UColumns: [ `counterName`,`serial`,`digits`,`precise`,`startDate`,`initValue` ],
       usluga: this.$.vnode.key,
       selected: null,
       newName: '',
@@ -27,9 +27,9 @@ export default { name: 'counters',
 	 .then(res => res.json())
 	 .then(js => {this.data = js;
 		js.forEach(c=>{
-		    if (!this.selected && this.counter && c.CounterId === this.counter)
+		    if (!this.selected && this.counter && c.counterId === this.counter)
 			this.selected=c;
-		    c.InitValue=this.$parent.format(c.InitValue,c.Precise,c.Digits);
+		    c.initValue=this.$parent.format(c.initValue,c.precise,c.digits);
 		});
 	    })
 	 .catch(a=>this.$parent.alert(a));
@@ -37,15 +37,17 @@ export default { name: 'counters',
 
     async add(e) {
 	const form=this.$refs.form || e.target.form || e.target;
+	const query=Object.fromEntries(new FormData(form).entries());
+	delete query.counterId;
 	this.showModal=false;
 	fetch(form.action.replace(/\b\d+\b/,this.usluga),{method: form.method, headers: {'Content-Type':'application/json'},
-	    body: JSON.stringify(Object.fromEntries(new FormData(form).entries()))})
+	    body: JSON.stringify(query)})
 	 .then(res => {const ct=res.headers.get('content-type');
 		if(!(res.status === 200 || res.status === 201) || !ct || ct.indexOf('application/json') === -1)
 		  return res.text();
 		else return res.json()})
 	 .then(j => { if (typeof j !== 'object') throw(j);
-		this.selected={CounterId: j['OK']||j['ok']};
+		this.selected={counterId: j['ok']};
 		this.fill(this.selected,true);
 		this.data.push(this.selected);
 		this.notifyParent();
@@ -58,7 +60,7 @@ export default { name: 'counters',
 	const foru=this.$refs.foru;
 	const sel=this.selected;
 	this.showModal=false;
-	fetch(foru.action+sel.CounterId,{method: 'PUT', headers: {'Content-Type':'application/json'},
+	fetch(foru.action+sel.counterId,{method: 'PUT', headers: {'Content-Type':'application/json'},
 	    body: JSON.stringify(Object.fromEntries(new FormData(form).entries()))})
 	 .then(res => res.text())
 	 .then(res => {if (!res.startsWith('OK')) throw(res);
@@ -72,7 +74,7 @@ export default { name: 'counters',
 	const foru=this.$refs.foru;
 	const sel=this.selected;
 	this.showModal=false;
-	fetch(foru.action+sel.CounterId,{method: 'DELETE'})
+	fetch(foru.action+sel.counterId,{method: 'DELETE'})
 	 .then(res => res.text() )
 	 .then(res => { if (!res.startsWith('OK')) throw(res);
 			this.data = this.data.filter(a=>a!==sel);
@@ -95,25 +97,25 @@ export default { name: 'counters',
     },
 
     fill(sel,full){
-	sel.CounterName=this.newName;
-	sel.Serial=this.newSer;
-	sel.Digits=this.newDig;
-	sel.Precise=this.newPrec;
+	sel.counterName=this.newName;
+	sel.serial=this.newSer;
+	sel.digits=this.newDig;
+	sel.precise=this.newPrec;
 	if (full){
-	sel.StartDate=this.newStart;
-	sel.InitValue=this.$parent.format(this.newInit, this.newPrec, this.newDig);
-	sel.UslugaRef=this.usluga;
+	sel.startDate=this.newStart;
+	sel.initValue=this.$parent.format(this.newInit, this.newPrec, this.newDig);
+	sel.uslugaRef=this.usluga;
 	}},
 
     do_select(u) {
 	this.selected=u;
 	if (u){
-	this.newName=u.CounterName;
-	this.newSer=u.Serial;
-	this.newDig=u.Digits;
-	this.newPrec=u.Precise;
-	this.newStart=u.StartDate;
-	this.newInit=u.InitValue;
+	this.newName=u.counterName;
+	this.newSer=u.serial;
+	this.newDig=u.digits;
+	this.newPrec=u.precise;
+	this.newStart=u.startDate;
+	this.newInit=u.initValue;
 	}
 	this.notifyParent();
     },
@@ -140,8 +142,8 @@ template: `
 <form ref=foru action="api/counter/"></form>
 <form ref=form @submit.prevent="submit" method=POST action="api/usluga/0/counter">
 <input type=submit style="display:none" title="to-catch-enter"/>
-<input type=hidden name=UslugaId :value="usluga" />
-<input type=hidden name=CounterId :value="selected && selected.CounterId" />
+<input type=hidden name=uslugaId :value="usluga" />
+<input type=hidden name=counterId :value="selected && selected.counterId" />
 
     <header class="modal-card-head">
     <p class="modal-card-title">Счётчик</p>
@@ -150,12 +152,12 @@ template: `
 
     <section class="modal-card-body">
         <table class="table">
-        <tr><td><label for=counter-name>Наименовение счётчика:</label></td><td><input id=counter-name name=CounterName v-model="newName" ref=first></td></tr>
-        <tr><td><label for=serial>Серийный номер:</label></td><td><input id=serial name=Serial v-model="newSer"></td></tr>
-        <tr><td><label for=digits>Разрядность:</label></td><td><input id=digits name=Digits v-model="newDig" type=number step=1 min=1 max=255></td></tr>
-        <tr><td><label for=precise>Точность:</label></td><td><input id=precise name=Precise v-model="newPrec" type=number step=1 min=0 max=255></td></tr>
-        <tr><td><label for=start-date>Начало работы:</label></td><td><input id=start-date name=StartDate v-model="newStart" type=date></td></tr>
-        <tr><td><label for=init-value>Начальные показания:</label></td><td><input id=init-value name=InitValue v-model="newInit"></td></tr>
+        <tr><td><label for=counter-name>Наименовение счётчика:</label></td><td><input id=counter-name name=counterName v-model="newName" ref=first></td></tr>
+        <tr><td><label for=serial>Серийный номер:</label></td><td><input id=serial name=serial v-model="newSer"></td></tr>
+        <tr><td><label for=digits>Разрядность:</label></td><td><input id=digits name=digits v-model="newDig" type=number step=1 min=1 max=255></td></tr>
+        <tr><td><label for=precise>Точность:</label></td><td><input id=precise name=precise v-model="newPrec" type=number step=1 min=0 max=255></td></tr>
+        <tr><td><label for=start-date>Начало работы:</label></td><td><input id=start-date name=startDate v-model="newStart" type=date></td></tr>
+        <tr><td><label for=init-value>Начальные показания:</label></td><td><input id=init-value name=initValue v-model="newInit"></td></tr>
         </table>
     </section>
         <footer class="modal-card-foot">
@@ -173,7 +175,7 @@ template: `
   <table v-if="!!data" class="table is-bordered is-hoverable" id="counters">
     <thead><tr><th v-for="key in UColumns">{{key}}</th></tr></thead>
     <tbody>
-      <tr v-for="u in data" @click="select(u)" :key="u.CounterId" :class="{ 'is-selected': selected === u }">
+      <tr v-for="u in data" @click="select(u)" :key="u.counterId" :class="{ 'is-selected': selected === u }">
         <td v-for="key in UColumns" :id="key">
           {{u[key]}}
         </td>
