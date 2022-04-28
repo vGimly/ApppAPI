@@ -155,7 +155,7 @@ namespace ApppAPI.app
             try
             {
                 if (await db.Verify(t))
-                    throw new Exception($"Не удастся изменить разрядность счётчика из-за наличия измерений с большей разрядностью ${t.Digits}");
+                    throw new Exception($"Не удастся изменить разрядность счётчика из-за наличия измерений с большей разрядностью {t.Digits}");
 
                 var obj = await db.Counters.FindAsync(id);
                 if (obj is null) return Results.NotFound();
