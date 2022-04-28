@@ -18,7 +18,7 @@ methods: {
     },
     format_def(value) { return isNaN(value)?'':this.counter_obj? this.format(value, this.counter_obj.precise, this.counter_obj.digits) : value},
 //  format(value,prec,dig){return isNaN(value)?'':new Intl.NumberFormat('en-US', { minimumFractionDigits: prec, maximumFractionDigits: prec }).format(typeof(value)==='number'?value:parseFloat(value.replace(/,/g,''))).padStart(dig+prec+1,'0')},
-    format(value,prec,dig){return isNaN(value)?'':value.toFixed(prec).padStart(dig+prec+1,'0')},
+    format(value,prec,dig){return isNaN(value)?'':Number.parseFloat(value).toFixed(prec).padStart(dig+prec+1,'0')},
     get_format(prec,dig) { if (this.counter_obj) { dig||=this.counter_obj.digits;prec||=this.counter_obj.precise} return prec && dig? '0'.padStart(dig,'0') + '.'.padEnd(prec,'0')+'1' :'10.10'},
     get_step(prec) { if (this.counter_obj) { prec||=this.counter_obj.precise} return prec? '0.'+'1'.padStart(prec,'0') :'0.01'},
     alert(msg) {
@@ -72,24 +72,5 @@ template: `
 
 `,
 
-components: {uslugi, tariffs, counters, measures}, // tab, tabs,
+components: {uslugi, tariffs, counters, measures},
 }
-/*
-import { tab, tabs } from './Tabs.js'
-  <tabs v-on:tabSelected="(value)=>this.tab=value">
-
-    <tab name="Услуги и тарифы" id="usl">
-	<uslugi v-on:uslugaSet="uslugaEvent" :usluga="usluga" />
-	<tariffs :key="usluga" v-if="tab==='usl'"/>
-    </tab>
-
-    <tab name="Счётчики" id="cnt">
-	<counters :key="usluga" v-if="tab==='cnt'" v-on:counterSelected="counterEvent" :counter="counter" />
-    </tab>
-
-    <tab name="Показания" id="mea">
-	<measures :key="counter" v-if="tab==='mea'" />
-    </tab>
-  </tabs>
-
-*/

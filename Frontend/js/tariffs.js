@@ -123,8 +123,8 @@ template: `
     </header>
     <section class="modal-card-body">
 	<table class="table">
-	<tr><td><label for=tariff-start>Начало действия:</label></td><td><input id=tariff-start name=tariffStart type=date v-model=newDate></td></tr>
-	<tr><td><label for=tariff-value>Значение тарифа:</label></td><td><input id=tariff-value name=tariffValue v-model=newPrice type=number format='10.00' step='0.01' ref=first></td></tr>
+	<tr><td><label for=tariff-start>Начало действия:</label></td><td><input id=tariff-start name=tDate type=date v-model=newDate></td></tr>
+	<tr><td><label for=tariff-value>Значение тарифа:</label></td><td><input id=tariff-value name=price v-model=newPrice type=number format='10.00' step='0.01' ref=first></td></tr>
 	</table>
     </section>
 	<footer class="modal-card-foot">

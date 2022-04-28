@@ -122,8 +122,8 @@ export default { name: 'measures',
 
     fill(sel,full){
 	var needCalc=!sel.mDate || sel.mDate !== this.newDate;
-	sel.value=this.$parent.format_def(this.newValue);
 	sel.mDate=this.newDate;
+	sel.value=this.$parent.format_def(this.newValue);
 
 	if (full)
 	sel.counterId=this.counter;
