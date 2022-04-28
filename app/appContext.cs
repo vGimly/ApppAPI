@@ -33,8 +33,9 @@ namespace ApppAPI.app
             modelBuilder.Entity<Counter>(entity =>
             {
                 entity.ToTable("counters")
-                     .Ignore(e => e.InitValue)
-                     .Ignore(e => e.StartDate);
+                    .Ignore(e => e.Max)
+                    .Ignore(e => e.InitValue)
+                    .Ignore(e => e.StartDate);
 
                 entity.HasIndex(e => new { e.CounterName, e.Serial }, "counter_name_serial")
                     .IsUnique()
@@ -230,6 +231,63 @@ namespace ApppAPI.app
             });
 
             OnModelCreatingPartial(modelBuilder);
+        }
+        
+// Нельзя изменить разрядность счётчика, если уже есть показания больше
+// [По-хорошему вообще счётчик менять нельзя - но мы суперадмин]
+        internal async Task<bool> Verify(Counter t)
+        {
+            return await Measures.Where(m => m.CounterRef == t.CounterId).MaxAsync(m => m.Value).ContinueWith(a => a.Result >= t.Max );
+        }
+
+        // Нельзя добавить (изменить можно) дату измерения ДО начального показания
+        // Нельзя добавить (или изменить) дату измерения ПОСЛЕ сегодня
+        // Нельзя добавить (или изменить) дату измерения когда такая дата уже есть (уникальный индекс SQL не позволит - пропускаем?) (при изменении найденная дата может быть - мы)
+        // Нельзя добавить показание вне диапазона по датам. [ (Д1,И1) (Д,И) (Д2,И2) - если Д > Д1, Д < Д2, то И >= И1 и И <= И]
+        // Нельзя добавить (или изменить) показание вне разрядности счётчика.
+
+        /* cmpd cmpv isme 
+         *   0    ~    f   > DateSame
+         *  -1    1    f   > BiggerThenPrev
+         *   1   -1    f   > LowerThenNext
+         * 
+         * 
+         * a c R  
+         * 0 0 0
+         * 0 1 1
+         * 1 0 0
+         * 1 1 0
+         * !a && c
+
+         * c && (n.isMe || ((n.cmpd != 0) && (n.cmpd * n.cmpv >= 0)))
+         * c && n.isMe || c && n.cmpd != 0 && n.cmpd * n.cmpv >= 0
+         */
+
+        internal void Verify(Measure t)
+        {
+            if (t.CounterRefNavigation is null)
+                t.CounterRefNavigation = Counters.Where(c => c.CounterId == t.CounterRef).FirstOrDefault();
+            t.Verify();
+
+            var q = Measures.Where(m => m.CounterRef == t.CounterRef)
+                .OrderBy(m => m.MDate)
+                .Select(m => new { isMe = t.MId == m.MId, cmpd = t.MDate.CompareTo(m.MDate), cmpv = t.Value.CompareTo(m.Value), m.MDate, m.Value });
+
+            var f = q.First();
+            if (f.cmpd < 0 && (t.MId == 0 || !f.isMe))
+                throw new Exception($"Попытка добавления измерения {t.MDate:d} до его ввода в эксплуатацию {f.MDate:d}");
+            foreach (var n in q)
+            {
+                if (n.isMe) continue;
+                if (n.cmpd == 0)
+                        throw new Exception($"Попытка добавления измерения: На дату {t.MDate:d} показания уже есть");
+                if (n.cmpd < 0 && n.cmpv > 0)
+                    throw new Exception($"Попытка добавления измерения: Для даты {t.MDate:d} есть ранние показания {n.MDate:d}/{n.Value} < {t.Value}");
+                if (n.cmpd > 0 && n.cmpv < 0)
+                    throw new Exception($"Попытка добавления измерения: Для даты {t.MDate:d} есть последующие показания {n.MDate:d}/{n.Value} > {t.Value}");
+            }
+            //            if (!q.ToList().Aggregate(true, (c, n) => c && n.isMe || c && n.cmpd != 0 && n.cmpd * n.cmpv >= 0))
+            //                throw new Exception($"Попытка добавления измерения {t.MDate} вне условий");
         }
 
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

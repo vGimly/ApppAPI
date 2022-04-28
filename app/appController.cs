@@ -152,11 +152,18 @@ namespace ApppAPI.app
         }
         public static async Task<IResult> UpdCounter(uint id, Counter t, appContext db)
         {
-            var obj = await db.Counters.FindAsync(id);
-            if (obj is null) return Results.NotFound();
-            obj ^= t;
-            int changed = await db.SaveChangesAsync();
-            return Results.Text("OK" + changed);
+            try
+            {
+                if (await db.Verify(t))
+                    throw new Exception($"Не удастся изменить разрядность счётчика из-за наличия измерений с большей разрядностью ${t.Digits}");
+
+                var obj = await db.Counters.FindAsync(id);
+                if (obj is null) return Results.NotFound();
+                obj ^= t;
+                obj.Verify();
+                int changed = await db.SaveChangesAsync();
+                return Results.Text("OK" + changed);
+            }catch (Exception ex){ return Results.BadRequest(ex.Message); }
         }
 
         public static async Task<IResult> DelCounter(uint id, appContext db)
@@ -178,11 +185,15 @@ namespace ApppAPI.app
         //}
         public static async Task<IResult> AddCounter(uint usl, Counter U, appContext db)
         {
-            var M= new Measure { MDate = U.StartDate, Value = U.InitValue};
-            U.Measures.Add(M);
-            db.Counters.Add(U);
-            await db.SaveChangesAsync();
-            return Results.Created($"/counter/{U.CounterId}", new { OK = U.CounterId, mea= M.MId });
+            try
+            {
+                var M = new Measure { MDate = U.StartDate, Value = U.InitValue };
+                U.Measures.Add(M);
+                U.Verify();
+                db.Counters.Add(U);
+                await db.SaveChangesAsync();
+                return Results.Created($"/counter/{U.CounterId}", new { OK = U.CounterId, mea = M.MId });
+            } catch (Exception ex) { return Results.BadRequest(ex.Message); }
         }
         #endregion
 
@@ -212,6 +223,7 @@ namespace ApppAPI.app
                         };
             return Results.Ok(await query.ToListAsync());
         }
+/*
     public static IEnumerable<TResult> SelectWithPrevious<TSource, TResult>
     (this IEnumerable<TSource> source,
      Func<TSource, TSource, TResult> projection)
@@ -230,6 +242,7 @@ namespace ApppAPI.app
                 }
             }
         }
+*/
 
         public static async Task<IResult> GetMoneyByCounter(uint cnt, appContext db)
         {
@@ -262,14 +275,19 @@ namespace ApppAPI.app
         }
         public static async Task<IResult> UpdMeasure(uint id, Measure U, appContext db)
         {
-            var obj = await db.Measures.FindAsync(id);
-            if (obj is null) return Results.NotFound();
-            obj ^= U;
-            int changed = await db.SaveChangesAsync();
-            return Results.Text("OK" + changed);
+            try
+            {
+                var obj = await db.Measures.FindAsync(id);
+                if (obj is null) return Results.NotFound();
+                obj ^= U;
+                db.Verify(obj);
+                int changed = await db.SaveChangesAsync();
+                return Results.Text("OK" + changed);
+            }
+            catch (Exception ex) { return Results.BadRequest(ex.Message); }
         }
 
-        public static async Task<IResult> DelMeasure(uint id, appContext db)
+public static async Task<IResult> DelMeasure(uint id, appContext db)
         {
             var obj = await db.Measures.FindAsync(id);
             int changed = 0;
@@ -283,9 +301,13 @@ namespace ApppAPI.app
 
         public static async Task<IResult> AddMeasure(uint cnt, Measure U, appContext db)
         {
+            try {
+                db.Verify(U);
             db.Measures.Add(U);
             await db.SaveChangesAsync();
             return Results.Created($"/measure/{U.MId}", new { OK = U.MId });
+            } catch (Exception ex) { return Results.BadRequest(ex.Message); }
+
         }
         #endregion
 

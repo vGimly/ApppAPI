@@ -39,6 +39,20 @@ namespace ApppAPI.app
             a.Precise = b.Precise;
             return a;
         }
+
+        [JsonIgnore]
+        public decimal Max { get { return (decimal)Math.Pow(10, (double)Digits); } }
+
+        public void Verify()
+        {
+            if (Digits < 1 || Digits > 10)
+                throw new Exception($"Неверное значение Разрядности: {Digits} надо между 1 и 10");
+
+            if (Precise < 0 || Precise > 10)
+                throw new Exception($"Неверное значение Точности: {Precise} надо между 0 и 10");
+
+            foreach (Measure m in Measures) m.Verify();
+        }
     }
     public partial class Counter_with_initials : Counter
     {
