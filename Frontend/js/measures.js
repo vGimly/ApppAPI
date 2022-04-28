@@ -22,17 +22,7 @@ export default { name: 'measures',
 	fetch(form.action.replace(/\b\d+\b/,this.counter))
 	 .then(res => res.json())
 	 .then(js => { this.data = js;
-			var prev=null;
-			var money=0;
-			js.forEach(j=>{ if (!prev) prev=j.value;
-					const m=(j.value-prev)*j.tariff;
-					j.init=this.$parent.format_def(prev);
-					j.mDate=j.mDate.replace(/T.*$/,'');
-					prev=j.value;
-					money+=m;
-					j.money=Math.floor(m*100+.5)/100;
-					j.value=this.$parent.format_def(j.value)});
-			this.money=Math.floor(money*100000+.5)/100000;
+		       this.selfMoney();
 		  })
 	 .catch(a=>this.$parent.alert(a));
     },
@@ -53,6 +43,19 @@ export default { name: 'measures',
 	 .catch(a=>this.$parent.alert(a));
     },
 
+    selfMoney(){
+	var prev=null;
+	var money=0;
+	this.data.forEach(j=>{ if (!prev) prev=j.value;
+			const m=(j.value-prev)*j.tariff;
+			j.init=this.$parent.format_def(prev);
+			j.mDate=j.mDate.replace(/T.*$/,'');
+			prev=j.value;
+			money+=m;
+			j.money=Math.floor(m*100+.5)/100;
+			j.value=this.$parent.format_def(j.value)});
+	this.money=Math.floor(money*100000+.5)/100000;
+    },
     async fetchMoney(e) {
 	fetch(`api/counter/${this.counter}/money`)
 	 .then(res=>res.text())
@@ -74,7 +77,11 @@ export default { name: 'measures',
 	 .then(j => { if (typeof j !== 'object') throw(j);
 		this.selected={mId: j['ok']};
 		this.fill(this.selected,true);
-		this.data.push(this.selected);
+		var i;for (i=0; i<this.data.length; i++)
+		if (this.data[i].mDate > this.selected.mDate) break;
+		this.data.splice(i,0,this.selected);
+		this.selfMoney();
+		this.fetchMoney();
 		})
 	 .catch(a=>this.$parent.alert(a));
     },
@@ -89,6 +96,15 @@ export default { name: 'measures',
 	 .then(res => res.text())
 	 .then(res => { if (!res.startsWith('OK')) throw(res);
 		    this.fill(sel,false);
+
+		this.data=this.data.filter(a=>a!==sel); // remove
+
+		var i;for (i=0; i<this.data.length; i++) // add
+		if (this.data[i].mDate > sel.mDate) break;
+		this.data.splice(i,0,sel);
+
+		    this.selfMoney();
+		    this.fetchMoney();
 		})
 	 .catch(a=>this.$parent.alert(a));
     },
@@ -103,6 +119,9 @@ export default { name: 'measures',
 	 .then(res => { if (!res.startsWith('OK')) throw(res)
 			this.data = this.data.filter(a=>a!==sel);
 			if (sel === this.selected) this.do_select(null);
+
+		    this.selfMoney();
+		    this.fetchMoney();
 		})
 	 .catch(a=>this.$parent.alert(a));
     },
